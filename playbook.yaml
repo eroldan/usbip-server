@@ -1,0 +1,146 @@
+- hosts: all
+  vars:
+    required_packages:
+      Debian:
+        - usbip
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+      Ubuntu:
+        - linux-tools-generic
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+      Raspbian:
+        - usbip
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+      Fedora:
+        - usbip
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+      Rocky:
+        - usbip
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+      Centos:
+        - usbip
+        - usbutils
+        - python3-pyudev
+        - python3-flask
+
+
+# Required packages
+  tasks:
+    - name: Abort if distribution not supported
+      fail:
+        msg: >
+          Distribution {{ ansible_facts['distribution'] }} is not supported.
+          Please add it to the `required_packages` map in the playbook.
+      when: ansible_facts['distribution'] not in required_packages
+
+    - name: Enable EPEL repo on Rocky
+      ansible.builtin.dnf:
+        name: epel-release
+        state: present
+      when: ansible_facts['distribution'] == "Rocky"
+
+    - name: Install usbip and other required packages
+      package:
+        name: "{{ required_packages[ansible_facts['distribution']] }}"
+        state: present
+
+# Main files copy
+    - name: Ensure /opt/usbip-server exists
+      ansible.builtin.file:
+        path: /opt/usbip-server
+        state: directory
+        mode: '0755'
+
+    - name: Install tools into /opt
+      ansible.builtin.copy:
+        src: "templates/{{ item }}"
+        dest: "/opt/usbip-server/{{ item }}"
+        mode: '0755'
+      loop:
+        - ls_usbids.py
+        - bind_usbids.py
+        - autobind-job.sh
+
+    - name: Install data into /opt
+      ansible.builtin.copy:
+        src: "templates/{{ item }}"
+        dest: "/opt/usbip-server/{{ item }}"
+        mode: '0644'
+        force: no
+      loop:
+        - auto_usbids.txt
+
+# Systemd services
+    - name: place usbipd systemd service file
+      ansible.builtin.template:
+        src: templates/usbipd.service
+        dest: /etc/systemd/system/usbipd.service
+        mode: '0644'
+      register: usbipd_unit
+
+    - name: place usbip-autobind@ systemd service file
+      ansible.builtin.template:
+        src: templates/usbip-autobind@.service
+        dest: /etc/systemd/system/usbip-autobind@.service
+        mode: '0644'
+      register: usbip_autobind_unit
+
+    - name: Reload systemd
+      ansible.builtin.systemd:
+        daemon_reload: yes
+
+    - name: Enable and start usbipd
+      ansible.builtin.systemd:
+        name: usbipd
+        enabled: yes
+        state: started
+
+# udev rules
+    - name: Deploy udev rule to trigger auto bind
+      ansible.builtin.copy:
+        dest: /etc/udev/rules.d/99-usbip.rules
+        #content: 'ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", RUN+="/opt/usbip-server/autobind-job.sh"'
+        mode: '0644'
+        content: 'ACTION=="add", SUBSYSTEM=="usb", ENV{DEVTYPE}=="usb_device", TAG+="systemd", ENV{SYSTEMD_WANTS}="usbip-autobind@%k.service"'
+
+    - name: Reload udev rules
+      ansible.builtin.command: udevadm control --reload-rules
+      become: yes
+
+# Web interface
+    - name: Copy web application files
+      tags: web
+      ansible.builtin.copy:
+        src: ./web/
+        dest: /opt/usbip-server/web/
+        owner: root
+        group: root
+        mode: '0755'
+
+    - name: place usbipd-web systemd service
+      ansible.builtin.template:
+        src: templates/usbip-web.service
+        dest: /etc/systemd/system/usbip-web.service
+        mode: '0644'
+      register: usbip_web_unit
+
+    - name: Reload systemd if unit file changed
+      ansible.builtin.systemd:
+        daemon_reload: yes
+      when: usbip_web_unit.changed
+
+    - name: Enable and start usbip-web
+      tags: web
+      ansible.builtin.systemd:
+        name: usbip-web
+        enabled: yes
+        state: restarted

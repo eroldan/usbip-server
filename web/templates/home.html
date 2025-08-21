@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block content %}
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                {% for category, message in messages %}
+                    <li class="{{ category }}">{{ message }}</li>
+                {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
+        <div>
+            Humble usbip tool
+            <form method="post">
+                <input type="hidden" name="editor" value="{{ content|e }}">
+                <input type="hidden" name="output_lines" value="{{ output_lines_str|e }}">
+                <button type="submit" name="update_data">Refresh</button>
+            </form>
+        </div>
+
+        <table width="100%"><tr><td width="50%" valign="top">
+            <h1>Auto export rules</h1>
+            <form method="post">
+                <textarea name="editor" rows="20" cols="80">{{ content|e }}</textarea><br>
+                <input type="hidden" name="output_lines" value="{{ output_lines_str|e }}">
+                <button type="submit" name="save">Save</button>
+            </form>
+        </td><td width="50%" valign="top">
+        <h1>Plugged in devices</h1>
+            <div>
+                {% for line in output_lines %}
+                    <form method="post">
+                        <input type="hidden" name="add_line" value="{{ line }}">
+                        <input type="hidden" name="editor" value="{{ content }}">
+                        <button type="submit">+</button>
+                        <span>{{ line }}</span>
+                    </form>
+                {% endfor %}
+            </div>
+        </td></tr></table>
+
+        <h1>Exported devices</h1>
+        <pre>{{ right_panel_output }}</pre>
+
+{% endblock %}

@@ -1,0 +1,8 @@
+[Unit]
+Description=Autobind USB device %I
+After=systemd-udevd.service
+After=usbipd.service
+
+[Service]
+Type=oneshot
+ExecStart=/opt/usbip-server/autobind-job.sh %I

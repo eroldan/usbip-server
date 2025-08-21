@@ -1,0 +1,37 @@
+/* Editor and right panel layout */
+.editor-panel-wrap {
+    display: flex;
+    flex-direction: row;
+    gap: 2em;
+    align-items: flex-start;
+    margin-bottom: 2em;
+}
+
+.editor-panel {
+    flex: 1 1 60%;
+}
+
+.editor-panel-wrap {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-bottom: 2em;
+    width: 100%;
+}
+.editor-panel {
+    width: 50%;
+    min-width: 0;
+    margin: 0;
+    padding: 0 8px 0 0;
+
+}
+
+.body-content {
+    padding: 5px;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.body-content h1 {
+    font-size: 1.1em;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}

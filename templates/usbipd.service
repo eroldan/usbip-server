@@ -1,0 +1,13 @@
+[Unit]
+Description=USB/IP Daemon
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStartPre=/sbin/modprobe -a usbip-core usbip-host
+ExecStart=/bin/sh -c '/usr/sbin/usbipd || /usr/bin/usbipd'
+Restart=on-failure
+
+[Install]
+WantedBy=multi-user.target

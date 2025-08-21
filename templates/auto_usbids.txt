@@ -1,0 +1,6 @@
+# glob patterns allowed
+
+Microsoft* Xbox360 Controller
+FiiO Electronics*
+Generic Jumper T15 Joystick
+EMEET HD Webcam eMeet C950
