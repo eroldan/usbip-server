@@ -30,4 +30,9 @@ Not secure. The usbip protocol doesn't have any kind of authorization. The web a
 udevadm control --log-priority=debug
 journalctl -u usbipd -f
 ```
-"""
+
+# FAQ
+- Q: Why exported devices show weird "unknown vendor : unknown product" instead of descriptive names?
+- A: Because usbip don't fetch the description attributes of the device, just uses the vendor & product ids (eg "328f:0073" ) to pick a name from the listings stored in `/usr/share/hwdata/usb.ids` or `/var/lib/usbutils/usb.ids`
+
+
